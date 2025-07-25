@@ -1,13 +1,19 @@
 using BlazorApp1.Components;
-using Employees.Data;
+using BlazorApp1.Data.Vendor;
+using BlazorApp1.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ConnectionContext>(builder.
+    Configuration.GetSection("ConnectionStrings"));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-//@builder.Services.AddSingleton<DataService, DataService>();
+builder.Services.AddTelerikBlazor();
+
+builder.Services.AddSingleton<IDatabaseVendor, SqliteVendor>();
 
 var app = builder.Build();
 
