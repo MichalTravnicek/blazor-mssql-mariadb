@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 namespace BlazorApp1.Data.Vendor;
 
 public class SqliteVendor(IOptions<ConnectionContext> connectionContext)
-    : BaseDatabaseVendor(() => new SqliteConnection(connectionContext.Value.Sqlite))
+    : BaseDatabaseVendor(() => new SqliteConnection(connectionContext.Value.Sqlite.Replace("/", Path.DirectorySeparatorChar.ToString())))
 {
     public override void CreateOne(GenericEntity entity)
     {

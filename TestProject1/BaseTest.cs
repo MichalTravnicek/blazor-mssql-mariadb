@@ -138,7 +138,7 @@ public abstract class BaseTest
     protected string GetResource(string name)
     {
         var runningDir = TestContext.CurrentContext.TestDirectory;
-        var filePath = Path.Join(runningDir, name);
+        var filePath = Path.Join(runningDir, name.Replace("/", Path.DirectorySeparatorChar.ToString()));
         return File.ReadAllText(filePath);
     }
     

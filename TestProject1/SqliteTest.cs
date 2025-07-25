@@ -27,7 +27,7 @@ public class SqliteTest : BaseTest
         context.Value.Sqlite = "Data Source=Test.db";
         var vendor = scopedServices.GetRequiredService<BaseDatabaseVendor>();
         
-        CallSql(vendor, ("DROP TABLE Employee"));
+        CallSql(vendor, "DROP TABLE IF EXISTS Employee");
         CallSql(vendor, GetResource("Data/Sqlite.sql"));
         
         vendor.GetAllTables();
