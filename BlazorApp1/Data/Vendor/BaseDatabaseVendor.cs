@@ -16,6 +16,21 @@ public abstract class BaseDatabaseVendor(Func<DbConnection> dbConnection) : IDat
         throw new NotImplementedException();
     }
 
+    public virtual GenericEntity GetEmpty(string tableName)
+    {
+        throw new NotImplementedException();
+    }
+    
+    protected GenericEntity GetEmptyInternal(string sql, string tableName)
+    {
+        var entries = SelectQuery(sql, tableName);
+        Console.WriteLine($"Found {tableName} count {entries.Count}");
+        var entity = entries.Single();
+        entity.Ids.Keys.ToList().ForEach(x => entity.Ids[x] = null);
+        entity.Values.Keys.ToList().ForEach(x => entity.Values[x] = null);
+        return entity;
+    }
+
     public List<GenericEntity> GetAll(string tableName)
     {
         var query = $"SELECT * FROM {tableName}";
@@ -35,7 +50,6 @@ public abstract class BaseDatabaseVendor(Func<DbConnection> dbConnection) : IDat
 
     public virtual void CreateOne(GenericEntity entity)
     {
-        
         CreateOne(entity,$"INSERT INTO @TABLE@ (@COLUMNS@) VALUES (@VALUES@)");
     }
 
@@ -58,9 +72,16 @@ public abstract class BaseDatabaseVendor(Func<DbConnection> dbConnection) : IDat
         columns.ForEach(x => AddSqlParameter(createCommand, x, entity.Values[x]));
         
         Console.WriteLine("Adding entity:" + entity);
-        var result = createCommand.ExecuteScalar();
-        Console.WriteLine("Added entity with id:" + result);
-        entity.Ids.SetAt(0, result);
+        using var reader = createCommand.ExecuteReader();
+        var table = new DataTable();
+        table.Load(reader);
+        var row = table.Rows[0].ItemArray;
+        for (var i = 0; i < row.Length; i++)
+        {
+            entity.Ids[table.Columns[i].ColumnName] = row[i];
+        }
+        Console.WriteLine("Added entity with id:" + String.Join(",", 
+            entity.Ids.Select(x => x.Key + "=" + x.Value)));
     }
 
     public void UpdateOne(GenericEntity entity)
@@ -83,8 +104,9 @@ public abstract class BaseDatabaseVendor(Func<DbConnection> dbConnection) : IDat
         var deleteCommand = db.CreateCommand();
 
         var tableName = entity.TableName;
-        var statement = $"DELETE FROM {tableName} WHERE " + CreateIdMatch(entity, deleteCommand);
+        var statement = $"DELETE FROM {tableName} WHERE (" + CreateIdMatch(entity, deleteCommand) + ")";
         deleteCommand.CommandText = statement;
+        PrintSql(statement);
         Console.WriteLine("Deleting entity:" + entity);
         deleteCommand.ExecuteNonQuery();
     }
@@ -111,10 +133,12 @@ public abstract class BaseDatabaseVendor(Func<DbConnection> dbConnection) : IDat
         {
             var entity = new GenericEntity();
             entity.TableName = tableName;
+            var primaryKeys = table.PrimaryKey;
             for (var i = 0; i < dataRow.ItemArray.Length; i++)
             {
                 var col = table.Columns[i];
-                if (col.AutoIncrement || col.Unique)
+                if (col.AutoIncrement || col.Unique || primaryKeys.Contains(col) ||
+                    col.DataType == typeof(Guid))
                 {
                     entity.Ids.Add(col.ColumnName, dataRow.ItemArray[i]);
                 }
@@ -155,24 +179,28 @@ public abstract class BaseDatabaseVendor(Func<DbConnection> dbConnection) : IDat
         return CreateIdMatch(entity.Ids, command);
     }
 
-    private string CreateIdMatch(IDictionary<string,object> ids, DbCommand? command)
+    private string CreateIdMatch(IDictionary<string,object?> ids, DbCommand? command)
     {
         var idMatch = new StringBuilder("");
         foreach (var id in ids)
         {
+            if (idMatch.Length > 0)
+            {
+                idMatch.Append(" AND ");
+            }
             if (command != null)
             {
-                idMatch.Append(id.Key + "=@" + id.Key + ",");    
+                idMatch.Append(id.Key + "=@" + id.Key);    
                 AddSqlParameter(command, id.Key, id.Value);
             }
             else
             {
-                idMatch.Append(id.Key + "=" + id.Value + ",");                
+                idMatch.Append(id.Key + "=" + "'" + id.Value + "'");                
             }
             
         }
 
         if (idMatch is null) throw new SqlTypeException("No id found on entity");
-        return TrimTrailingComma(idMatch.ToString());
+        return idMatch.ToString();
     }
 }

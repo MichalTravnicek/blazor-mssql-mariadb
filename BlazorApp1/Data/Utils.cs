@@ -42,7 +42,7 @@ public class Utils
         Console.WriteLine("***********************************************************");
     }
 
-    public static void AddSqlParameter(DbCommand command, string name, object value)
+    public static void AddSqlParameter(DbCommand command, string name, object? value)
     {
         var param = command.CreateParameter();
         param.ParameterName = "@" + name;

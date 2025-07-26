@@ -2,7 +2,7 @@ namespace BlazorApp1.Models;
 
 public class GenericEntity
 {
-    public OrderedDictionary<string,object> Ids { get; set; } = new();
+    public OrderedDictionary<string,object?> Ids { get; set; } = new();
     
     public string? TableName { get; set; }
     public Dictionary<string, object?> Values { get; set; } = new();

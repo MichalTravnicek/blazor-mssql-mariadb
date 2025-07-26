@@ -31,7 +31,7 @@ public abstract class BaseTest
     }
 
     [Test]
-    public void TestGetOne()
+    public virtual void TestGetOne()
     {
         using var scope = _serviceProvider.CreateScope();
         
@@ -49,7 +49,7 @@ public abstract class BaseTest
     }
     
     [Test]
-    public void TestGetAll()
+    public virtual void TestGetAll()
     {
         using var scope = _serviceProvider.CreateScope();
         
@@ -70,15 +70,13 @@ public abstract class BaseTest
     }
     
     [Test]
-    public void TestCreateOne()
+    public virtual void TestCreateOne()
     {
         using var scope = _serviceProvider.CreateScope();
         
         var scopedServices = scope.ServiceProvider;
         var db = scopedServices.GetRequiredService<IDatabaseVendor>();
-        GenericEntity newEntity = new GenericEntity();
-        newEntity.TableName = "Employee";
-        newEntity.Ids["Id"] = null;
+        GenericEntity newEntity = db.GetEmpty("Employee");
         newEntity.Values["Avatar"] = "AVATAR"; 
         newEntity.Values["Department"] = "DEPARTMENT"; 
         newEntity.Values["Email"] = "EMAIL"; 
@@ -86,8 +84,8 @@ public abstract class BaseTest
         newEntity.Values["LastName"] = "LASTNAME"; 
 
         db.CreateOne(newEntity);
-        Assert.That(newEntity.Ids.GetAt(0).Value, Is.Not.Null);
-        Console.WriteLine(newEntity);
+        newEntity.Ids.Values.ToList().ForEach(x=>Assert.That(x, Is.Not.Null));
+        Console.WriteLine("Created:" + newEntity);
 
         Assert.Multiple(() =>
         {
@@ -98,7 +96,7 @@ public abstract class BaseTest
     }
     
     [Test]
-    public void TestUpdateOne()
+    public virtual void TestUpdateOne()
     {
         using var scope = _serviceProvider.CreateScope();
         
@@ -114,7 +112,7 @@ public abstract class BaseTest
     }
     
     [Test]
-    public void TestDeleteOne()
+    public virtual void TestDeleteOne()
     {
         using var scope = _serviceProvider.CreateScope();
 

@@ -19,5 +19,9 @@ public class SqliteVendor(IOptions<ConnectionContext> connectionContext)
         List<string> enumerable = entries.Select(entity => entity.Values["name"].ToString()).ToList();
         return enumerable;
     }
-    
+
+    public override GenericEntity GetEmpty(string tableName)
+    {
+        return GetEmptyInternal($"SELECT * FROM {tableName} LIMIT 1", tableName);
+    }
 }
