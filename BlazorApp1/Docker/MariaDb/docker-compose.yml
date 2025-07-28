@@ -1,0 +1,23 @@
+services:
+
+  mariadb:
+    image: mariadb:10.6-jammy
+    restart: always
+    command: --init-file /tmp/db/init.sql
+    environment:
+      MARIADB_ROOT_PASSWORD: example
+      MARIADB_USER: csharp
+      MARIADB_PASSWORD: cool_secret
+    volumes:
+      - ./mariadb-docker.sql:/tmp/db/init.sql
+      - maria-db:/var/lib/mysql
+    ports:
+      - 3306:3306
+
+  adminer:
+    image: adminer:5
+    restart: always
+    ports:
+      - 9080:8080
+volumes:
+  maria-db:
