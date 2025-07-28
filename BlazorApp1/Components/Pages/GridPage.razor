@@ -1,0 +1,180 @@
+@page "/grid"
+@rendermode InteractiveServer
+@layout TelerikLayout
+
+@using System.Collections
+@using System.Data
+@using BlazorApp1.Components.Layout
+@using Telerik.DataSource.Extensions
+@using Telerik.DataSource;
+@using Telerik.SvgIcons
+
+@* @inject IDatabaseVendor ProductService *@
+<TelerikRootComponent>
+    Selected value: @selectedValue
+    <br />
+    <TelerikComboBox Data="@myComboData" TextField="MyTextField" ValueField="MyValueField" @bind-Value="selectedValue"
+                     Placeholder="Select an item..." ShowClearButton="true" Filterable="true" Width="14em">
+    </TelerikComboBox>
+
+    @code {
+        IEnumerable<MyDdlModel> myComboData = Enumerable.Range(1, 20).Select(x => new MyDdlModel { MyTextField = "item " + x, MyValueField = x });
+
+        int selectedValue { get; set; }
+
+        //the model type and value field type must be provided to the dropdpownlist
+        public class MyDdlModel
+        {
+            public int MyValueField { get; set; }
+            public string MyTextField { get; set; }
+        }
+    }    
+    <TelerikGrid TItem="Dictionary<string, object>"
+                 OnUpdate="@UpdateHandler"
+                 OnDelete="@DeleteHandler"
+                 OnCreate="@CreateHandler"
+                 ConfirmDelete="true"
+                 Pageable="true"
+                 Groupable="true"
+                 Sortable="true"
+                 FilterMode="GridFilterMode.FilterMenu"
+                 Resizable="true"
+                 Reorderable="true"
+                 EditMode="GridEditMode.Popup"
+                 SelectionMode="GridSelectionMode.Multiple"
+                 OnStateInit="@(args => OnStateInit(args))"
+                 PageSize="10"
+                 OnRead="@ReadItems"
+                 Navigable="true">
+        <GridColumns>
+
+            @foreach (var column in GetColumns())
+            {
+                if (column == "ProductId" || column == "UnitsInStock")
+                {
+                    <GridColumn Field="@column" Title=@column FieldType="@typeof(int)" Width="170px"/>
+                }
+                else
+                {
+                    <GridColumn Field="@column" Title=@column FieldType="@typeof(string)" Width="170px"/>
+                }
+
+            }
+            <GridCommandColumn Width="260px">
+                <GridCommandButton Command="Edit" Icon="@SvgIcon.Pencil" ThemeColor="@ThemeConstants.Button.ThemeColor.Primary">Edit</GridCommandButton>
+                <GridCommandButton Command="Delete" Icon="@SvgIcon.Trash">Delete</GridCommandButton>
+            </GridCommandColumn>
+        </GridColumns>
+        <GridToolBarTemplate>
+            <GridCommandButton Command="Add" Icon="@SvgIcon.Plus">Add Product</GridCommandButton>
+        </GridToolBarTemplate>
+    </TelerikGrid>
+
+
+    @code {
+        DataTable DataTable { get; set; }
+
+
+        protected override void OnInitialized()
+        {
+            LoadData();
+            ProductNames = new[] { "Volvo", "BMW", "Ford", "Mazda", "Foo" }.ToList();
+            DataTable = GetData();
+            selectedValue = 1;
+        }
+
+        private void LoadData()
+        {
+
+        }
+
+        private List<String> GetColumns()
+        {
+            return new List<string> { "ProductId", "ProductName", "UnitPrice", "UnitsInStock" };
+        }
+
+        public DataTable GetData()
+        {
+            DataTable table = new DataTable();
+
+            table.Columns.Add("ProductId", typeof(int)).DefaultValue = 0;
+            table.Columns.Add("ProductName", typeof(string)).DefaultValue = "";
+            table.Columns.Add("UnitPrice", typeof(decimal)).DefaultValue = 0.0;
+            table.Columns.Add("UnitsInStock", typeof(int)).DefaultValue = 0;
+
+            for (int i = 1; i < ProductNames.Count; i++)
+            {
+                table.Rows.Add(i, ProductNames.ElementAt(i), i * 5.2, i % 2 + 2);
+            }
+
+            return table;
+        }
+
+        public List<string> ProductNames { get; set; }
+
+        protected void ReadItems(GridReadEventArgs args)
+        {
+            Console.WriteLine("Reading data");
+
+            var datasourceResult = DataTable.ToDataSourceResult(args.Request);
+            args.Data = (datasourceResult.Data as IEnumerable<Dictionary<string, object>>)
+                .Select(x => x.ToDictionary(
+                    x => x.Key,
+                    x => x.Value == DBNull.Value ? null : x.Value))
+                .ToList();
+            args.Total = datasourceResult.Total;
+        }
+
+        private void OnStateInit(GridStateEventArgs<Dictionary<string, object>> args)
+        {
+            //grouping not working correctly
+
+            // args.GridState.GroupDescriptors = new List<GroupDescriptor>()
+            // {
+            //     new GroupDescriptor()
+            //     {
+            //         Member = "UnitsInStock",
+            //         MemberType = typeof(int)
+            //     }
+            // };
+        }
+
+        public void CreateHandler(GridCommandEventArgs args)
+        {
+            var model = (Dictionary<string, object>)args.Item;
+
+            // update the view-model
+            var row = DataTable.NewRow();
+            row["ProductId"] = DataTable.Rows.Count + 1;
+            foreach (var item in model)
+            {
+                row[item.Key] = item.Value;
+            }
+
+            DataTable.Rows.InsertAt(row, 0);
+        }
+
+        public void UpdateHandler(GridCommandEventArgs args)
+        {
+            // var product = (ProductDto)args.Item;
+            // ProductService.UpdateProduct(product);
+            LoadData();
+        }
+
+        public void DeleteHandler(GridCommandEventArgs args)
+        {
+            // ProductService.DeleteProduct((ProductDto)args.Item);
+            LoadData();
+        }
+
+    }
+
+    <style>
+    .width-100 {
+        width: 100%;
+    }
+    .grid .k-grid-content tr {
+        line-height: 32px;
+    }
+</style>
+</TelerikRootComponent>
