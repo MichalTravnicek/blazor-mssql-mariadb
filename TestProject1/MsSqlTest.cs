@@ -23,10 +23,9 @@ public class MsSqlTest : BaseTest
         
         var scopedServices = scope.ServiceProvider;
         var context = scopedServices.GetService<IOptions<ConnectionContext>>();
-        context.Value.MsSqlDb = "Server=localhost;User Id=sa;Password=Password12345!;Trust Server Certificate=True";
+        context.Value.MsSqlDb = "Server=localhost;User Id=sa;Database=Test;Password=Password12345!;Trust Server Certificate=True";
         var vendor = scopedServices.GetRequiredService<BaseDatabaseVendor>();
         
-        CallSql(vendor, GetResource("Data/MsSqlTest.sql"));
         CallSql(vendor, "IF OBJECT_ID(N'dbo.Employee', N'U') IS NOT NULL DROP TABLE [dbo].[Employee]; ");
         CallSql(vendor, GetResource("Data/MsSql.sql"));
         

@@ -15,8 +15,8 @@ CREATE TABLE "Employee" (
                             "FirstName" VARCHAR(max) NULL,
                             "LastName" VARCHAR(max) NULL
                             )
-END
 CREATE UNIQUE CLUSTERED INDEX CIX_Employee ON dbo.Employee(Id)
+END
 
 BEGIN TRANSACTION;
 INSERT INTO "Employee" VALUES (DEFAULT,'https://robohash.org/autautea.png?size=100x100&set=set1','Factory3','nmorgue0@disqus.com','Nonie','Morgue');

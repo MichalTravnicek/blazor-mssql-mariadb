@@ -13,7 +13,8 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddTelerikBlazor();
 
-builder.Services.AddSingleton<IDatabaseVendor, SqliteVendor>();
+// builder.Services.AddSingleton<IDatabaseVendor, SqliteVendor>();
+builder.Services.AddSingleton<IDatabaseVendor, MsSqlVendor>();
 
 var app = builder.Build();
 
