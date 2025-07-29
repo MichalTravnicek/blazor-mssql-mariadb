@@ -13,23 +13,25 @@
 @inject IDatabaseVendor DataService
 
 <TelerikRootComponent>
-    Selected value: @selectedValue
+    Selected table: @selectedTable
     <br />
-    <TelerikComboBox Data="@myComboData" TextField="MyTextField" ValueField="MyValueField" @bind-Value="selectedValue"
-                     Placeholder="Select an item..." ShowClearButton="true" Filterable="true" Width="14em">
+    <TelerikComboBox Data="@tablesData" @bind-Value="selectedTable" OnChange="@SelectedTableHandler"
+                     Placeholder="Select table..." Filterable="true" Width="14em">
     </TelerikComboBox>
 
     @code {
-        IEnumerable<MyDdlModel> myComboData = Enumerable.Range(1, 20).Select(x => new MyDdlModel { MyTextField = "item " + x, MyValueField = x });
+        IEnumerable<string> tablesData = new List<string>();
 
-        int selectedValue { get; set; }
-
-        //the model type and value field type must be provided to the dropdpownlist
-        public class MyDdlModel
+        string selectedTable { get; set; }
+        
+        private void SelectedTableHandler(object obj)
         {
-            public int MyValueField { get; set; }
-            public string MyTextField { get; set; }
+            Console.WriteLine("Selected table:" + obj);
+            TableName = (string) obj;
+            LoadData();
+            GridRef.Rebind();
         }
+
     }    
     <TelerikGrid TItem="Dictionary<string, object>"
                  OnUpdate="@UpdateHandler"
@@ -46,6 +48,7 @@
                  SelectionMode="GridSelectionMode.Multiple"
                  OnStateInit="@(args => OnStateInit(args))"
                  PageSize="10"
+                 @ref="@GridRef"
                  OnRead="@ReadItems"
                  Navigable="true">
         <GridColumns>
@@ -71,12 +74,16 @@
     @code {
         DataTable DataTable { get; set; }
         List<GenericEntity> DataEntities { get; set; }
-        string TableName { get; set; } = "Employee";
+        TelerikGrid<Dictionary<string, object>> GridRef { get; set; }
+        string TableName { get; set; } = "";
         
         protected override void OnInitialized()
         {
+            var allTables = DataService.GetAllTables();
+            tablesData = allTables;
+            selectedTable = allTables[0];
+            TableName = selectedTable;
             LoadData();
-            selectedValue = 1;
         }
 
         private void LoadData()
@@ -105,6 +112,7 @@
                     x => x.Value == DBNull.Value ? null : x.Value))
                 .ToList();
             args.Total = datasourceResult.Total;
+            Console.WriteLine("Total:" + args.Total);
         }
 
         private void OnStateInit(GridStateEventArgs<Dictionary<string, object>> args)

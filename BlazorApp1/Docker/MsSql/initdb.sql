@@ -57,3 +57,36 @@ INSERT INTO Employee VALUES (DEFAULT,'https://robohash.org/quosconsequaturqui.pn
 COMMIT;
 END
 GO
+IF NOT EXISTS (
+    SELECT * FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = 'dbo'
+      AND TABLE_TYPE = 'BASE TABLE'
+      AND TABLE_NAME = 'Customer'
+)
+BEGIN
+CREATE TABLE Customer (
+                          PKGUID UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_Customer
+                              PRIMARY KEY NONCLUSTERED DEFAULT (newsequentialid()),
+                          Id INTEGER NOT NULL IDENTITY(1,1),
+                                  Location VARCHAR(max) NULL,
+                                  Email VARCHAR(max) NULL,
+                                  FirstName VARCHAR(max) NULL,
+                                  LastName VARCHAR(max) NULL
+        )
+
+CREATE UNIQUE CLUSTERED INDEX CIX_Customer ON dbo.Customer(Id)
+
+BEGIN TRANSACTION;
+INSERT INTO Customer VALUES (DEFAULT,'Factory','nmorgue0@disqus.com','Nonie','Morgue');
+INSERT INTO Customer VALUES (DEFAULT,'Research and Development','owilliamson2@washingtonpost.com','Or
+ville','Williamson');
+INSERT INTO Customer VALUES (DEFAULT,'Product Management','ditzkovici3@phpbb.com','Dwayne','Itzkovici');
+INSERT INTO Customer VALUES (DEFAULT, 'Research and Development','sjerisch4@craigslist.org','Shelbi','Jerisch
+');
+INSERT INTO Customer VALUES (DEFAULT,'Services','jwitcherley5@1und1.de','Jerrilee','Witcherley');
+INSERT INTO Customer VALUES (DEFAULT,'Human Resources','qmccague7@facebook.com','Quincey','McCague');
+INSERT INTO Customer VALUES (DEFAULT,'Accounting','acundey8@yahoo.com','Aharon','Cundey');
+INSERT INTO Customer VALUES (DEFAULT,'Services','nanthill9@posterous.com','Neila','Anthill');
+COMMIT;
+END
+GO
