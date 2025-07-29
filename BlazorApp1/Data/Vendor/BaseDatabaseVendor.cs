@@ -11,6 +11,8 @@ public abstract class BaseDatabaseVendor(Func<DbConnection> dbConnection) : IDat
 {
     public readonly Func<DbConnection> GetConnection = dbConnection;
 
+    public abstract string GetVendorName();
+
     public virtual List<string> GetAllTables()
     {
         throw new NotImplementedException();

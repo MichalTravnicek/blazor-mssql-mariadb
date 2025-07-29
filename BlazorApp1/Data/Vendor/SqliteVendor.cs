@@ -7,6 +7,8 @@ namespace BlazorApp1.Data.Vendor;
 public class SqliteVendor(IOptions<ConnectionContext> connectionContext)
     : BaseDatabaseVendor(() => new SqliteConnection(connectionContext.Value.Sqlite.Replace("/", Path.DirectorySeparatorChar.ToString())))
 {
+    public override string GetVendorName() => "Sqlite";
+
     public override void CreateOne(GenericEntity entity)
     {
         CreateOne(entity,"INSERT INTO @TABLE@ (@COLUMNS@) VALUES (@VALUES@) RETURNING " + entity.Ids.Keys.First()); 

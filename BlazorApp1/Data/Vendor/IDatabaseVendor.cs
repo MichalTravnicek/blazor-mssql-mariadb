@@ -3,7 +3,11 @@ using BlazorApp1.Models;
 namespace BlazorApp1.Data.Vendor;
 
 public interface IDatabaseVendor
-{
+{   /// <summary>
+    /// Get name of database vendor
+    /// </summary>
+    /// <returns></returns>
+    string GetVendorName();
     /// <summary>
     /// Get list of all tables in database
     /// </summary>

@@ -7,10 +7,10 @@ namespace BlazorApp1.Data.Vendor;
 public class MsSqlVendor(IOptions<ConnectionContext> connectionContext)
     : BaseDatabaseVendor(() => new SqlConnection(connectionContext.Value.MsSqlDb))
 {
+    public override string GetVendorName() => "MsSqlServer";
+
     public override void CreateOne(GenericEntity entity)
     {
-        // CreateOne(entity,"INSERT INTO @TABLE@ (@COLUMNS@) VALUES (@VALUES@); SELECT SCOPE_IDENTITY()");
-
         var ids = String.Join(", ", entity.Ids.Keys.Select(x => "INSERTED." + x));
         CreateOne(entity,$"INSERT INTO @TABLE@ (@COLUMNS@) OUTPUT {ids} VALUES (@VALUES@)");
     }

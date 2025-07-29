@@ -1,6 +1,7 @@
 using BlazorApp1.Components;
 using BlazorApp1.Data.Vendor;
 using BlazorApp1.Models;
+using BlazorApp1.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +14,11 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddTelerikBlazor();
 
-// builder.Services.AddSingleton<IDatabaseVendor, SqliteVendor>();
 builder.Services.AddSingleton<IDatabaseVendor, MsSqlVendor>();
+builder.Services.AddSingleton<IDatabaseVendor, MariaDbVendor>();
+builder.Services.AddSingleton<IDatabaseVendor, SqliteVendor>();
+
+builder.Services.AddSingleton<DatabaseService, DatabaseService>();
 
 var app = builder.Build();
 

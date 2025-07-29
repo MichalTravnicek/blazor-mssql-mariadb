@@ -6,33 +6,53 @@
 @using BlazorApp1.Components.Layout
 @using BlazorApp1.Data.Vendor
 @using BlazorApp1.Models
+@using BlazorApp1.Services
 @using Telerik.DataSource.Extensions
 @using Telerik.DataSource;
 @using Telerik.SvgIcons
 
-@inject IDatabaseVendor DataService
+@inject DatabaseService DatabaseService
 
 <TelerikRootComponent>
-    Selected table: @selectedTable
-    <br />
+    @* Selected database: @selectedVendor *@
+    @* <br /> *@
+    <TelerikComboBox Data="@vendorData" @bind-Value="selectedVendor" OnChange="@SelectedVendorHandler"
+                     Placeholder="Select database..." Filterable="true" Width="14em">
+    </TelerikComboBox>
+    @* Selected table: @selectedTable *@
+    @* <br/> *@
     <TelerikComboBox Data="@tablesData" @bind-Value="selectedTable" OnChange="@SelectedTableHandler"
                      Placeholder="Select table..." Filterable="true" Width="14em">
     </TelerikComboBox>
-
+    <TelerikButton OnClick="@ResetDefault">Reset the Grid</TelerikButton>
     @code {
+        IEnumerable<string> vendorData = new List<string>();
         IEnumerable<string> tablesData = new List<string>();
+        
+        string selectedVendor { get; set; }
 
         string selectedTable { get; set; }
         
+        private void SelectedVendorHandler(object obj)
+        {
+            Console.WriteLine("Selected vendor:" + obj);
+            VendorName = (string)obj;
+            DataService = DatabaseService.GetVendor(VendorName);
+            InitTables();
+            LoadData();
+            ResetDefault();
+        }
+
         private void SelectedTableHandler(object obj)
         {
             Console.WriteLine("Selected table:" + obj);
-            TableName = (string) obj;
+            TableName = (string)obj;
             LoadData();
-            GridRef.Rebind();
+            ResetDefault();
         }
 
-    }    
+    }
+
     <TelerikGrid TItem="Dictionary<string, object>"
                  OnUpdate="@UpdateHandler"
                  OnDelete="@DeleteHandler"
@@ -52,18 +72,19 @@
                  OnRead="@ReadItems"
                  Navigable="true">
         <GridColumns>
-
             @foreach (var column in GetColumns())
             {
-                {
-                    <GridColumn Field="@column.Key" Title=@column.Key FieldType="column.Value.Type" 
-                                Editable="!column.Value.IsId" Width="170px"/>
-                }
+                <GridColumn Field="@column.Key" Title=@column.Key FieldType="column.Value.Type"
+                            Editable="!column.Value.IsId" Width="170px"/>
             }
             <GridCommandColumn Width="260px">
+                @* @GetColumns().ToList()[0].Key *@
+                @* TODO there is bug that Edit/Delete column is permanently moving to the left *@
+                @* when switching to table with lower count of columns and back *@
                 <GridCommandButton Command="Edit" Icon="@SvgIcon.Pencil" ThemeColor="@ThemeConstants.Button.ThemeColor.Primary">Edit</GridCommandButton>
                 <GridCommandButton Command="Delete" Icon="@SvgIcon.Trash">Delete</GridCommandButton>
             </GridCommandColumn>
+            
         </GridColumns>
         <GridToolBarTemplate>
             <GridCommandButton Command="Add" Icon="@SvgIcon.Plus">Add new item</GridCommandButton>
@@ -72,18 +93,38 @@
 
 
     @code {
+        IDatabaseVendor DataService { get; set; }
         DataTable DataTable { get; set; }
         List<GenericEntity> DataEntities { get; set; }
         TelerikGrid<Dictionary<string, object>> GridRef { get; set; }
+        string VendorName { get; set; } = "";
         string TableName { get; set; } = "";
-        
+
         protected override void OnInitialized()
+        {
+            var vendorNames = DatabaseService.VendorNames();
+            vendorData = vendorNames;
+            selectedVendor = vendorNames[0];
+            VendorName = selectedVendor;
+            DataService = DatabaseService.GetVendor(VendorName);
+            InitTables();
+            LoadData();
+        }
+        
+        public void ResetDefault()
+        {
+            Console.WriteLine("Reset grid");
+            var state = new GridState<Dictionary<string, object>>();  //Creating a new empty state
+            GridRef.SetStateAsync(state);  //Setting the state to the Grid
+            GridRef.Rebind();
+        }
+
+        private void InitTables()
         {
             var allTables = DataService.GetAllTables();
             tablesData = allTables;
             selectedTable = allTables[0];
             TableName = selectedTable;
-            LoadData();
         }
 
         private void LoadData()
@@ -91,7 +132,7 @@
             DataEntities = DataService.GetAll(TableName);
             DataTable = GetData();
         }
-        
+
         private IEnumerable<KeyValuePair<string, GenericEntity.ColumnInfo>> GetColumns()
         {
             return DataEntities.First().ColumnsInfo();
@@ -104,7 +145,6 @@
 
         protected void ReadItems(GridReadEventArgs args)
         {
-            Console.WriteLine("Reading data");
             var datasourceResult = DataTable.ToDataSourceResult(args.Request);
             args.Data = (datasourceResult.Data as IEnumerable<Dictionary<string, object>>)
                 .Select(x => x.ToDictionary(
@@ -112,16 +152,17 @@
                     x => x.Value == DBNull.Value ? null : x.Value))
                 .ToList();
             args.Total = datasourceResult.Total;
-            Console.WriteLine("Total:" + args.Total);
+            Console.WriteLine("Reading data - Total:" + args.Total);
         }
 
         private void OnStateInit(GridStateEventArgs<Dictionary<string, object>> args)
         {
-            
+
         }
+
         public void CreateHandler(GridCommandEventArgs args)
         {
-            var model = (Dictionary<string, object>) args.Item;
+            var model = (Dictionary<string, object>)args.Item;
             var entity = model.ToEntity(DataService.GetEmpty(TableName));
             DataService.CreateOne(entity);
             LoadData();
@@ -129,7 +170,7 @@
 
         public void UpdateHandler(GridCommandEventArgs args)
         {
-            var model = (Dictionary<string, object>) args.Item;
+            var model = (Dictionary<string, object>)args.Item;
             var entity = model.ToEntity(DataService.GetEmpty(TableName));
             DataService.UpdateOne(entity);
             LoadData();
@@ -137,7 +178,7 @@
 
         public void DeleteHandler(GridCommandEventArgs args)
         {
-            var model = (Dictionary<string, object>) args.Item;
+            var model = (Dictionary<string, object>)args.Item;
             var entity = model.ToEntity(DataService.GetEmpty(TableName));
             DataService.DeleteOne(entity);
             LoadData();

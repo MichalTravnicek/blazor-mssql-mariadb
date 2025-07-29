@@ -7,6 +7,8 @@ namespace BlazorApp1.Data.Vendor;
 public class MariaDbVendor(IOptions<ConnectionContext> connectionContext)
     : BaseDatabaseVendor(() => new MySqlConnection(connectionContext.Value.MariaDb))
 {
+    public override string GetVendorName() => "MariaDb";
+
     public override void CreateOne(GenericEntity entity)
     {
         var ids = String.Join(", ", entity.Ids.Keys);
