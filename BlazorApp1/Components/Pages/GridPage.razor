@@ -5,11 +5,14 @@
 @using System.Collections
 @using System.Data
 @using BlazorApp1.Components.Layout
+@using BlazorApp1.Data.Vendor
+@using BlazorApp1.Models
 @using Telerik.DataSource.Extensions
 @using Telerik.DataSource;
 @using Telerik.SvgIcons
 
-@* @inject IDatabaseVendor ProductService *@
+@inject IDatabaseVendor DataService
+
 <TelerikRootComponent>
     Selected value: @selectedValue
     <br />
@@ -50,15 +53,10 @@
 
             @foreach (var column in GetColumns())
             {
-                if (column == "ProductId" || column == "UnitsInStock")
                 {
-                    <GridColumn Field="@column" Title=@column FieldType="@typeof(int)" Width="170px"/>
+                    <GridColumn Field="@column.Key" Title=@column.Key FieldType="column.Value.Type" 
+                                Editable="!column.Value.IsId" Width="170px"/>
                 }
-                else
-                {
-                    <GridColumn Field="@column" Title=@column FieldType="@typeof(string)" Width="170px"/>
-                }
-
             }
             <GridCommandColumn Width="260px">
                 <GridCommandButton Command="Edit" Icon="@SvgIcon.Pencil" ThemeColor="@ThemeConstants.Button.ThemeColor.Primary">Edit</GridCommandButton>
@@ -73,44 +71,30 @@
 
     @code {
         DataTable DataTable { get; set; }
-
-
+        List<GenericEntity> DataEntities { get; set; }
+        
         protected override void OnInitialized()
         {
             LoadData();
-            ProductNames = new[] { "Volvo", "BMW", "Ford", "Mazda", "Foo" }.ToList();
-            DataTable = GetData();
             selectedValue = 1;
         }
 
         private void LoadData()
         {
-
+            DataEntities = DataService.GetAll("Employee");
+            DataTable = GetData();
         }
-
-        private List<String> GetColumns()
+        
+        private IEnumerable<KeyValuePair<string, GenericEntity.ColumnInfo>> GetColumns()
         {
-            return new List<string> { "ProductId", "ProductName", "UnitPrice", "UnitsInStock" };
+            return DataEntities.First().ColumnsInfo();
         }
 
         public DataTable GetData()
         {
-            DataTable table = new DataTable();
-
-            table.Columns.Add("ProductId", typeof(int)).DefaultValue = 0;
-            table.Columns.Add("ProductName", typeof(string)).DefaultValue = "";
-            table.Columns.Add("UnitPrice", typeof(decimal)).DefaultValue = 0.0;
-            table.Columns.Add("UnitsInStock", typeof(int)).DefaultValue = 0;
-
-            for (int i = 1; i < ProductNames.Count; i++)
-            {
-                table.Rows.Add(i, ProductNames.ElementAt(i), i * 5.2, i % 2 + 2);
-            }
-
+            DataTable table = DataEntities.ToDataTable();
             return table;
         }
-
-        public List<string> ProductNames { get; set; }
 
         protected void ReadItems(GridReadEventArgs args)
         {
@@ -127,25 +111,16 @@
 
         private void OnStateInit(GridStateEventArgs<Dictionary<string, object>> args)
         {
-            //grouping not working correctly
-
-            // args.GridState.GroupDescriptors = new List<GroupDescriptor>()
-            // {
-            //     new GroupDescriptor()
-            //     {
-            //         Member = "UnitsInStock",
-            //         MemberType = typeof(int)
-            //     }
-            // };
+            
         }
 
         public void CreateHandler(GridCommandEventArgs args)
         {
+            Console.WriteLine("Create handler");
             var model = (Dictionary<string, object>)args.Item;
 
-            // update the view-model
             var row = DataTable.NewRow();
-            row["ProductId"] = DataTable.Rows.Count + 1;
+            row["Id"] = DataTable.Rows.Count + 1;
             foreach (var item in model)
             {
                 row[item.Key] = item.Value;

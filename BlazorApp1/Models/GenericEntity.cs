@@ -5,7 +5,28 @@ public class GenericEntity
     public OrderedDictionary<string,object?> Ids { get; set; } = new();
     
     public string? TableName { get; set; }
-    public Dictionary<string, object?> Values { get; set; } = new();
+    public OrderedDictionary<string, object?> Values { get; set; } = new();
+
+    public IEnumerable<KeyValuePair<string, ColumnInfo>> ColumnsInfo()
+    {
+        List<KeyValuePair<string, ColumnInfo>> columns = [];
+        columns.AddRange(Ids.Select(keyValue => 
+            new KeyValuePair<string, ColumnInfo>(keyValue.Key, new ColumnInfo(keyValue.Value!.GetType(),true))));
+        columns.AddRange(Values.Select(keyValue => 
+            new KeyValuePair<string, ColumnInfo>(keyValue.Key, new ColumnInfo(keyValue.Value!.GetType(),false))));
+        return columns;
+    }
+
+    public IEnumerable<KeyValuePair<string, object?>> Columns()
+    {
+        return Ids.Union(Values);
+    }
+
+    public class ColumnInfo(Type type, bool isId)
+    {
+        public Type Type { get; } = type;
+        public bool IsId { get; } = isId;
+    }
     
     public override string ToString()
     {
