@@ -2,7 +2,6 @@
 @rendermode InteractiveServer
 @layout TelerikLayout
 
-@using System.Collections
 @using System.Data
 @using BlazorApp1.Components.Layout
 @using BlazorApp1.Data.Vendor
@@ -64,7 +63,7 @@
             </GridCommandColumn>
         </GridColumns>
         <GridToolBarTemplate>
-            <GridCommandButton Command="Add" Icon="@SvgIcon.Plus">Add Product</GridCommandButton>
+            <GridCommandButton Command="Add" Icon="@SvgIcon.Plus">Add new item</GridCommandButton>
         </GridToolBarTemplate>
     </TelerikGrid>
 
@@ -72,6 +71,7 @@
     @code {
         DataTable DataTable { get; set; }
         List<GenericEntity> DataEntities { get; set; }
+        string TableName { get; set; } = "Employee";
         
         protected override void OnInitialized()
         {
@@ -81,7 +81,7 @@
 
         private void LoadData()
         {
-            DataEntities = DataService.GetAll("Employee");
+            DataEntities = DataService.GetAll(TableName);
             DataTable = GetData();
         }
         
@@ -92,14 +92,12 @@
 
         public DataTable GetData()
         {
-            DataTable table = DataEntities.ToDataTable();
-            return table;
+            return DataEntities.ToDataTable();
         }
 
         protected void ReadItems(GridReadEventArgs args)
         {
             Console.WriteLine("Reading data");
-
             var datasourceResult = DataTable.ToDataSourceResult(args.Request);
             args.Data = (datasourceResult.Data as IEnumerable<Dictionary<string, object>>)
                 .Select(x => x.ToDictionary(
@@ -113,32 +111,27 @@
         {
             
         }
-
         public void CreateHandler(GridCommandEventArgs args)
         {
-            Console.WriteLine("Create handler");
-            var model = (Dictionary<string, object>)args.Item;
-
-            var row = DataTable.NewRow();
-            row["Id"] = DataTable.Rows.Count + 1;
-            foreach (var item in model)
-            {
-                row[item.Key] = item.Value;
-            }
-
-            DataTable.Rows.InsertAt(row, 0);
+            var model = (Dictionary<string, object>) args.Item;
+            var entity = model.ToEntity(DataService.GetEmpty(TableName));
+            DataService.CreateOne(entity);
+            LoadData();
         }
 
         public void UpdateHandler(GridCommandEventArgs args)
         {
-            // var product = (ProductDto)args.Item;
-            // ProductService.UpdateProduct(product);
+            var model = (Dictionary<string, object>) args.Item;
+            var entity = model.ToEntity(DataService.GetEmpty(TableName));
+            DataService.UpdateOne(entity);
             LoadData();
         }
 
         public void DeleteHandler(GridCommandEventArgs args)
         {
-            // ProductService.DeleteProduct((ProductDto)args.Item);
+            var model = (Dictionary<string, object>) args.Item;
+            var entity = model.ToEntity(DataService.GetEmpty(TableName));
+            DataService.DeleteOne(entity);
             LoadData();
         }
 

@@ -9,13 +9,12 @@ public static class GenericEntityExtensions
         Console.WriteLine("To data table conversion");
         DataTable table = new DataTable();
 
-        var genericEntities = entities.ToList();
-        foreach (var column in genericEntities.First().ColumnsInfo())
+        foreach (var column in entities.First().ColumnsInfo())
         {
             table.Columns.Add(column.Key, column.Value.Type);
         }
         
-        foreach (var item in genericEntities)
+        foreach (var item in entities)
         {
             DataRow row = table.NewRow();
             foreach (var keyValue in item.Columns())
@@ -27,5 +26,22 @@ public static class GenericEntityExtensions
 
         return table;
     }
+
+    public static GenericEntity ToEntity(this Dictionary<string,object> data, GenericEntity entity)
+    {
+        foreach (var keyValue in data)
+        {
+            if (entity.Ids.Keys.Contains(keyValue.Key))
+            {
+                entity.Ids[keyValue.Key] = keyValue.Value;
+            }
+            else
+            {
+                entity.Values[keyValue.Key] = keyValue.Value;
+            }
+        }
+        return entity;
+    }
+
     
 }
