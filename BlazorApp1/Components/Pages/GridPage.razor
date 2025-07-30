@@ -14,23 +14,27 @@
 @inject DatabaseService DatabaseService
 
 <TelerikRootComponent>
-    <TelerikComboBox Data="@vendorData" @bind-Value="selectedVendor" OnChange="@SelectedVendorHandler"
+    <TelerikComboBox Data="@_vendorData" @bind-Value="SelectedVendor" OnChange="@SelectedVendorHandler"
                      Placeholder="Select database..." Filterable="true" Width="14em">
     </TelerikComboBox>
-    <TelerikComboBox Data="@tablesData" @bind-Value="selectedTable" OnChange="@SelectedTableHandler"
+    <TelerikComboBox Data="@_tablesData" @bind-Value="SelectedTable" OnChange="@SelectedTableHandler"
                      Placeholder="Select table..." Filterable="true" Width="14em">
     </TelerikComboBox>
     <TelerikButton OnClick="@ResetDefault">Reset the Grid</TelerikButton>
     <TelerikButton OnClick="@ResetOrder">Reset order</TelerikButton>
     <TelerikButton OnClick="@ResetState">Reset state</TelerikButton>
     
+    <EditPopup @ref="@EditWindow" Columns="@GetColumns().ToDictionary()" ItemValues="@TableItem" 
+               SaveAction="@((args) => UpdateHandler(args))"
+               ResetAction="@(() => ResetState())"/>
+    
     @code {
-        IEnumerable<string> vendorData = new List<string>();
-        IEnumerable<string> tablesData = new List<string>();
-        
-        string selectedVendor { get; set; }
+        IEnumerable<string> _vendorData = new List<string>();
+        IEnumerable<string> _tablesData = new List<string>();
 
-        string selectedTable { get; set; }
+        string SelectedVendor { get; set; } = "";
+
+        string SelectedTable { get; set; } = "";
         
         private void SelectedVendorHandler(object obj)
         {
@@ -53,7 +57,6 @@
     }
 
     <TelerikGrid TItem="Dictionary<string, object>"
-                 OnUpdate="@UpdateHandler"
                  OnDelete="@DeleteHandler"
                  OnCreate="@CreateHandler"
                  ConfirmDelete="true"
@@ -80,7 +83,7 @@
             }
   
             <GridCommandColumn Id="999" Width="260px" ShowColumnChooser="true">
-                <GridCommandButton Command="Edit" Icon="@SvgIcon.Pencil" ThemeColor="@ThemeConstants.Button.ThemeColor.Primary">Edit</GridCommandButton>
+                <GridCommandButton OnClick="@((args)=> EditItem((args.Item as Dictionary<string, object>)!))" Icon="@SvgIcon.Pencil">Edit</GridCommandButton>
                 <GridCommandButton Command="Delete" Icon="@SvgIcon.Trash">Delete</GridCommandButton>
             </GridCommandColumn>
 
@@ -96,15 +99,18 @@
         DataTable DataTable { get; set; }
         List<GenericEntity> DataEntities { get; set; }
         TelerikGrid<Dictionary<string, object>> GridRef { get; set; }
+        Dictionary<string, object> TableItem { get; set; } = new();
+        EditPopup EditWindow;
+        
         string VendorName { get; set; } = "";
         string TableName { get; set; } = "";
 
         protected override void OnInitialized()
         {
             var vendorNames = DatabaseService.VendorNames();
-            vendorData = vendorNames;
-            selectedVendor = vendorNames[0];
-            VendorName = selectedVendor;
+            _vendorData = vendorNames;
+            SelectedVendor = vendorNames[0];
+            VendorName = SelectedVendor;
             DataService = DatabaseService.GetVendor(VendorName);
             InitTables();
             LoadData();
@@ -138,9 +144,9 @@
         private void InitTables()
         {
             var allTables = DataService.GetAllTables();
-            tablesData = allTables;
-            selectedTable = allTables[0];
-            TableName = selectedTable;
+            _tablesData = allTables;
+            SelectedTable = allTables[0];
+            TableName = SelectedTable;
         }
 
         private void LoadData()
@@ -184,19 +190,26 @@
             LoadData();
         }
 
-        public void UpdateHandler(GridCommandEventArgs args)
-        {
-            var model = (Dictionary<string, object>)args.Item;
-            var entity = model.ToEntity(DataService.GetEmpty(TableName));
-            DataService.UpdateOne(entity);
-            LoadData();
-        }
-
         public void DeleteHandler(GridCommandEventArgs args)
         {
             var model = (Dictionary<string, object>)args.Item;
             var entity = model.ToEntity(DataService.GetEmpty(TableName));
             DataService.DeleteOne(entity);
+            LoadData();
+        }
+
+        private void EditItem(Dictionary<string, object> argsItem)
+        {
+            TableItem = argsItem;
+            EditWindow.WindowIsVisible = true;
+            StateHasChanged();
+        }
+        
+        public void UpdateHandler(Dictionary<string, object> argsItem)
+        {
+            var entity = argsItem.ToEntity(DataService.GetEmpty(TableName));
+            Console.WriteLine(entity);
+            DataService.UpdateOne(entity);
             LoadData();
         }
 

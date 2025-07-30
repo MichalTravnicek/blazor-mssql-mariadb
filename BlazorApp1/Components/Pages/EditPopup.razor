@@ -1,0 +1,97 @@
+@using BlazorApp1.Models
+<TelerikWindow @bind-Visible="@WindowIsVisible">
+    <WindowTitle>
+        Edit values
+    </WindowTitle>
+    <WindowContent>
+        @foreach (var keyValue in ItemValues)
+        {
+            var type = keyValue.Value.GetType();
+            if (type == typeof(Guid))
+            {
+                continue;
+            }
+            bool editable = !Columns[keyValue.Key].IsId;
+            <label style="margin-right:0.5em" for="@keyValue.Key">@keyValue.Key</label>
+            if (keyValue.Value is string)
+            {
+                <TelerikTextBox Placeholder="" Title="Enter value"
+                                TabIndex="3" Width="180px"
+                                Value="@keyValue.Value.ToString()"
+                                ReadOnly="!editable"
+                                Enabled="editable"
+                                OnChange="x => ItemValues[keyValue.Key] = x"
+                                InputMode="text" Id="@keyValue.Key" Name="@keyValue.Key">
+                </TelerikTextBox>
+            }
+            else if (keyValue.Value is int)
+            {
+                Int32 value = (int)keyValue.Value;
+                <TelerikNumericTextBox
+                    TabIndex="3" Width="180px"
+                    Value=value
+                    ReadOnly="!editable"
+                    Enabled="editable"
+                    OnChange="x => ItemValues[keyValue.Key] = x"
+                    Id="@keyValue.Key">
+                </TelerikNumericTextBox>
+            }
+            <br/>
+        }
+    </WindowContent>
+    <WindowActions>
+        <WindowAction Name="Close" />
+    </WindowActions>
+    <WindowFooter>
+            <TelerikButton Icon="@nameof(SvgIcon.Save)"
+                           ButtonType="@ButtonType.Button"
+                           OnClick="@SaveChanges">Save
+            </TelerikButton>
+            <TelerikButton Icon="@nameof(SvgIcon.Cancel)"
+                           ButtonType="@ButtonType.Button"
+                           OnClick="@CancelEdit">Cancel
+            </TelerikButton>
+    </WindowFooter>
+</TelerikWindow>
+
+<TelerikButton OnClick="@( () => WindowIsVisible = !WindowIsVisible )">Toggle edit</TelerikButton>
+
+@code {
+    private bool _windowIsVisible;
+
+    [Parameter] 
+    public Dictionary<string,GenericEntity.ColumnInfo> Columns { get; set; }
+    [Parameter] 
+    public Dictionary<string, object> ItemValues { get; set; }
+
+    public bool WindowIsVisible
+    {
+        get => _windowIsVisible;
+        set
+        {
+            _windowIsVisible = value;
+            if (value) return; //skip if visible
+            StateHasChanged();
+            ItemValues.Clear();
+            ResetAction.InvokeAsync();
+        }
+    }
+
+    [Parameter]
+    public EventCallback<Dictionary<string, object>> SaveAction { get; set; }
+    [Parameter]
+    public EventCallback ResetAction { get; set; }
+
+
+    private void CancelEdit()
+    {
+        WindowIsVisible = false;
+    }
+
+    private void SaveChanges()
+    {
+        SaveAction.InvokeAsync(ItemValues);
+        WindowIsVisible = false;
+    }
+    
+}
