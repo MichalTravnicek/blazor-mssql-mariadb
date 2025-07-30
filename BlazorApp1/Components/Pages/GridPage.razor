@@ -14,17 +14,16 @@
 @inject DatabaseService DatabaseService
 
 <TelerikRootComponent>
-    @* Selected database: @selectedVendor *@
-    @* <br /> *@
     <TelerikComboBox Data="@vendorData" @bind-Value="selectedVendor" OnChange="@SelectedVendorHandler"
                      Placeholder="Select database..." Filterable="true" Width="14em">
     </TelerikComboBox>
-    @* Selected table: @selectedTable *@
-    @* <br/> *@
     <TelerikComboBox Data="@tablesData" @bind-Value="selectedTable" OnChange="@SelectedTableHandler"
                      Placeholder="Select table..." Filterable="true" Width="14em">
     </TelerikComboBox>
     <TelerikButton OnClick="@ResetDefault">Reset the Grid</TelerikButton>
+    <TelerikButton OnClick="@ResetOrder">Reset order</TelerikButton>
+    <TelerikButton OnClick="@ResetState">Reset state</TelerikButton>
+    
     @code {
         IEnumerable<string> vendorData = new List<string>();
         IEnumerable<string> tablesData = new List<string>();
@@ -40,7 +39,7 @@
             DataService = DatabaseService.GetVendor(VendorName);
             InitTables();
             LoadData();
-            ResetDefault();
+            ResetOrder();
         }
 
         private void SelectedTableHandler(object obj)
@@ -48,7 +47,7 @@
             Console.WriteLine("Selected table:" + obj);
             TableName = (string)obj;
             LoadData();
-            ResetDefault();
+            ResetOrder();
         }
 
     }
@@ -72,19 +71,19 @@
                  OnRead="@ReadItems"
                  Navigable="true">
         <GridColumns>
+            @{var columnId = 0;}
             @foreach (var column in GetColumns())
             {
-                <GridColumn Field="@column.Key" Title=@column.Key FieldType="column.Value.Type"
+                <GridColumn Id="@columnId.ToString()" Field="@column.Key" Title=@column.Key FieldType="column.Value.Type"
                             Editable="!column.Value.IsId" Width="170px"/>
+                columnId++;
             }
-            <GridCommandColumn Width="260px">
-                @* @GetColumns().ToList()[0].Key *@
-                @* TODO there is bug that Edit/Delete column is permanently moving to the left *@
-                @* when switching to table with lower count of columns and back *@
+  
+            <GridCommandColumn Id="999" Width="260px" ShowColumnChooser="true">
                 <GridCommandButton Command="Edit" Icon="@SvgIcon.Pencil" ThemeColor="@ThemeConstants.Button.ThemeColor.Primary">Edit</GridCommandButton>
                 <GridCommandButton Command="Delete" Icon="@SvgIcon.Trash">Delete</GridCommandButton>
             </GridCommandColumn>
-            
+
         </GridColumns>
         <GridToolBarTemplate>
             <GridCommandButton Command="Add" Icon="@SvgIcon.Plus">Add new item</GridCommandButton>
@@ -110,13 +109,30 @@
             InitTables();
             LoadData();
         }
-        
+
         public void ResetDefault()
         {
-            Console.WriteLine("Reset grid");
-            var state = new GridState<Dictionary<string, object>>();  //Creating a new empty state
-            GridRef.SetStateAsync(state);  //Setting the state to the Grid
             GridRef.Rebind();
+        }
+        
+        public void ResetState()
+        {
+            GridRef.SetStateAsync(null);
+        }
+
+        public void ResetOrder()
+        {
+            Console.WriteLine("Reset column order");
+            var state = new GridState<Dictionary<string, object>>();  //Creating a new empty state
+            var gridColumnStates = GridRef.GetState().ColumnStates;
+
+            foreach (var columnState in gridColumnStates)
+            {
+                columnState.Index = Convert.ToInt32(columnState.Id);
+            }
+            
+            state.ColumnStates = gridColumnStates;
+            GridRef.SetStateAsync(state);
         }
 
         private void InitTables()
@@ -157,7 +173,7 @@
 
         private void OnStateInit(GridStateEventArgs<Dictionary<string, object>> args)
         {
-
+            Console.WriteLine("State init");
         }
 
         public void CreateHandler(GridCommandEventArgs args)
