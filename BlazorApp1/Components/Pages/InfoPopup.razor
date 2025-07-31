@@ -1,0 +1,56 @@
+@using BlazorApp1.Models
+<TelerikWindow @bind-Visible="@WindowIsVisible">
+    <WindowTitle>
+        Item detail 
+    </WindowTitle>
+    <WindowContent>
+        @foreach (var keyValue in ItemValues)
+        {
+            var type = keyValue.Value.GetType();
+            bool editable = false;
+            <label style="margin-right:0.5em" for="@keyValue.Key">@keyValue.Key</label>
+            <label style="margin-right:0.5em" for="@keyValue.Key">@type</label>
+            {
+                <TelerikTextBox Placeholder="" Title="Enter value"
+                                TabIndex="3" Width="280px"
+                                Value="@keyValue.Value.ToString()"
+                                ReadOnly="!editable"
+                                InputMode="text" Id="@keyValue.Key" Name="@keyValue.Key">
+                </TelerikTextBox>
+            }
+            <br/>
+        }
+    </WindowContent>
+    <WindowActions>
+        <WindowAction Name="Close" />
+    </WindowActions>
+    <WindowFooter>
+    </WindowFooter>
+</TelerikWindow>
+
+<TelerikButton OnClick="@( () => WindowIsVisible = !WindowIsVisible )">Toggle info</TelerikButton>
+
+@code {
+    private bool _windowIsVisible;
+
+    [Parameter] 
+    public Dictionary<string,GenericEntity.ColumnInfo> Columns { get; set; }
+    [Parameter] 
+    public Dictionary<string, object> ItemValues { get; set; }
+    [Parameter]
+    public EventCallback ResetAction { get; set; }
+
+    public bool WindowIsVisible
+    {
+        get => _windowIsVisible;
+        set
+        {
+            _windowIsVisible = value;
+            if (value) return; //skip if visible
+            StateHasChanged();
+            ItemValues.Clear();
+            ResetAction.InvokeAsync();
+        }
+    }
+    
+}

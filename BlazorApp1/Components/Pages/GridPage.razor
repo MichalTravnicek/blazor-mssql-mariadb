@@ -28,6 +28,9 @@
                SaveAction="@((args) => UpdateHandler(args))"
                ResetAction="@(() => ResetState())"/>
     
+    <InfoPopup @ref="@InfoWindow" Columns="@GetColumns().ToDictionary()" ItemValues="@TableItem" 
+               ResetAction="@(() => ResetState())"/>
+    
     @code {
         IEnumerable<string> _vendorData = new List<string>();
         IEnumerable<string> _tablesData = new List<string>();
@@ -66,10 +69,9 @@
                  FilterMode="GridFilterMode.FilterMenu"
                  Resizable="true"
                  Reorderable="true"
-                 EditMode="GridEditMode.Popup"
                  SelectionMode="GridSelectionMode.Multiple"
                  OnStateInit="@(args => OnStateInit(args))"
-                 PageSize="10"
+                 PageSize="5"
                  @ref="@GridRef"
                  OnRead="@ReadItems"
                  Navigable="true">
@@ -82,7 +84,8 @@
                 columnId++;
             }
   
-            <GridCommandColumn Id="999" Width="260px" ShowColumnChooser="true">
+            <GridCommandColumn Id="999" Width="160px" ShowColumnChooser="true">
+                <GridCommandButton OnClick="@((args)=> DisplayItem((args.Item as Dictionary<string, object>)!))" Icon="@SvgIcon.Accessibility">Info</GridCommandButton>
                 <GridCommandButton OnClick="@((args)=> EditItem((args.Item as Dictionary<string, object>)!))" Icon="@SvgIcon.Pencil">Edit</GridCommandButton>
                 <GridCommandButton Command="Delete" Icon="@SvgIcon.Trash">Delete</GridCommandButton>
             </GridCommandColumn>
@@ -101,6 +104,7 @@
         TelerikGrid<Dictionary<string, object>> GridRef { get; set; }
         Dictionary<string, object> TableItem { get; set; } = new();
         EditPopup EditWindow;
+        InfoPopup InfoWindow;
         
         string VendorName { get; set; } = "";
         string TableName { get; set; } = "";
@@ -211,6 +215,13 @@
             Console.WriteLine(entity);
             DataService.UpdateOne(entity);
             LoadData();
+        }
+
+        private void DisplayItem(Dictionary<string, object> argsItem)
+        {
+            TableItem = argsItem;
+            InfoWindow.WindowIsVisible = true;
+            StateHasChanged();
         }
 
     }
