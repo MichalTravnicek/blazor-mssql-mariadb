@@ -71,6 +71,7 @@
         {
             _windowIsVisible = value;
             if (value) return; //skip if visible
+            Console.WriteLine("---Edit window hidden---");
             StateHasChanged();
             ItemValues.Clear();
             ResetAction.InvokeAsync();

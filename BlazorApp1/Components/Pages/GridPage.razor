@@ -26,10 +26,10 @@
     
     <EditPopup @ref="@EditWindow" Columns="@GetColumns().ToDictionary()" ItemValues="@TableItem" 
                SaveAction="@((args) => UpdateHandler(args))"
-               ResetAction="@(() => ResetState())"/>
+               ResetAction="@(() => ResetOrder())"/>
     
     <InfoPopup @ref="@InfoWindow" Columns="@GetColumns().ToDictionary()" ItemValues="@TableItem" 
-               ResetAction="@(() => ResetState())"/>
+               ResetAction="@(() => ResetOrder())"/>
     
     @code {
         IEnumerable<string> _vendorData = new List<string>();
@@ -47,7 +47,6 @@
             ColumnsInfo = [];
             InitTables();
             LoadData();
-            ResetOrder();
         }
 
         private void SelectedTableHandler(object obj)
@@ -56,7 +55,6 @@
             TableName = (string)obj;
             ColumnsInfo = [];
             LoadData();
-            ResetOrder();
         }
 
     }
@@ -74,6 +72,7 @@
                  EditMode="GridEditMode.Popup"
                  SelectionMode="GridSelectionMode.Multiple"
                  OnStateInit="@(args => OnStateInit(args))"
+                 OnStateChanged="@(args => OnGridStateChanged(args))"
                  PageSize="5"
                  @ref="@GridRef"
                  OnRead="@ReadItems"
@@ -137,6 +136,10 @@
         public void ResetOrder()
         {
             Console.WriteLine("Reset column order");
+            if (GridRef == null)
+            {
+                return;
+            }
             var state = new GridState<Dictionary<string, object>>();  //Creating a new empty state
             var gridColumnStates = GridRef.GetState().ColumnStates;
 
@@ -159,8 +162,10 @@
 
         private void LoadData()
         {
+            Console.WriteLine("---Loading data---");
             DataEntities = DataService.GetAll(TableName);
             DataTable = GetData();
+            ResetOrder();
         }
 
         private IEnumerable<KeyValuePair<string, GenericEntity.ColumnInfo>> GetColumns()
@@ -191,11 +196,19 @@
 
         private void OnStateInit(GridStateEventArgs<Dictionary<string, object>> args)
         {
-            Console.WriteLine("State init");
+            Console.WriteLine("---State init---");
+        }
+        
+        private void OnGridStateChanged(GridStateEventArgs<Dictionary<string, object>> args)
+        {
+            //Putting ResetOrder() here will block Add item popup!!!!
+            //Looks like StateHasChanged() has no effect on this callback
+            Console.WriteLine("---State changed---");
         }
 
         public void CreateHandler(GridCommandEventArgs args)
         {
+            Console.WriteLine("---Creating entity---");
             var model = (Dictionary<string, object>)args.Item;
             var entity = model.ToEntity(DataService.GetEmpty(TableName));
             try
@@ -211,6 +224,7 @@
 
         public void DeleteHandler(GridCommandEventArgs args)
         {
+            Console.WriteLine("---Deleting entity---");
             var model = (Dictionary<string, object>)args.Item;
             var entity = model.ToEntity(DataService.GetEmpty(TableName));
             try
@@ -233,6 +247,7 @@
         
         public void UpdateHandler(Dictionary<string, object> argsItem)
         {
+            Console.WriteLine("---Updating entity---");
             var entity = argsItem.ToEntity(DataService.GetEmpty(TableName));
             Console.WriteLine(entity);
             try

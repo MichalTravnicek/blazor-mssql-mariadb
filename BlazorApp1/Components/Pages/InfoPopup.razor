@@ -46,7 +46,13 @@
         set
         {
             _windowIsVisible = value;
-            if (value) return; //skip if visible
+            if (value)
+            {
+                Console.WriteLine("---Info window visible---");
+                return;
+            }
+
+            Console.WriteLine("---Info window hidden---");
             StateHasChanged();
             ItemValues.Clear();
             ResetAction.InvokeAsync();
