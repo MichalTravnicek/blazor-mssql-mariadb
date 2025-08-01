@@ -32,5 +32,10 @@ public class SqliteTest : BaseTest
         
         vendor.GetAllTables();
     }
-    
+
+    public override void TestEmptyDatabase()
+    {
+        //not implemented yet
+    }
+
 }

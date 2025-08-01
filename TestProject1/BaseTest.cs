@@ -70,6 +70,25 @@ public abstract class BaseTest
     }
     
     [Test]
+    public virtual void TestEmptyDatabase()
+    {
+        using var scope = _serviceProvider.CreateScope();
+        
+        var scopedServices = scope.ServiceProvider;
+        var db = scopedServices.GetRequiredService<IDatabaseVendor>();
+        var baseDb = scopedServices.GetRequiredService<BaseDatabaseVendor>();
+        CallSql(baseDb, $"DELETE FROM {TableName}");
+        GenericEntity newEntity = db.GetEmpty("Employee");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(newEntity.Ids, Is.Not.Empty);
+            Assert.That(newEntity.Values, Is.Not.Empty);
+            Assert.That(newEntity.TableName, Is.Not.Empty);
+        });
+    }
+    
+    [Test]
     public virtual void TestCreateOne()
     {
         using var scope = _serviceProvider.CreateScope();

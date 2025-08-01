@@ -1,3 +1,5 @@
+using System.Data.SqlTypes;
+using System.Text.RegularExpressions;
 using BlazorApp1.Models;
 using Microsoft.Extensions.Options;
 using MySqlConnector;
@@ -24,6 +26,38 @@ public class MariaDbVendor(IOptions<ConnectionContext> connectionContext)
 
     public override GenericEntity GetEmpty(string tableName)
     {
-        return GetEmptyInternal($"SELECT * FROM {tableName} LIMIT 1", tableName);
+        var blankEntity = new GenericEntity();
+        blankEntity.TableName = tableName;
+        var select = $"DESCRIBE {tableName};";
+        List<GenericEntity> entries = SelectQuery(select);
+        foreach (var selectEntity in entries)
+        {
+            var column = selectEntity.Values["Field"]?.ToString() ?? 
+                         throw new SqlTypeException("Column name missing");
+            var dataType = ColumnTypeMapping(selectEntity.Values["Type"]?.ToString() ?? string.Empty);
+            var isId = selectEntity.Values["Key"]?.ToString()?.Length > 0;
+            if (isId)
+            {
+                blankEntity.Ids[column] = dataType;
+            }
+            else
+            {
+                blankEntity.Values[column] = dataType;
+            }
+        }
+        return blankEntity;
+    }
+    
+    private object ColumnTypeMapping(string type)
+    {
+        var _type = Regex.Replace(type,"\\(.*\\)", "");
+        switch (_type)
+        {
+            case "int" : return 0;
+            case "char" : return "";
+            case "varchar" : return "";
+        }
+
+        throw new SqlTypeException("Unknown type encountered");
     }
 }
