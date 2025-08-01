@@ -44,6 +44,7 @@
             Console.WriteLine("Selected vendor:" + obj);
             VendorName = (string)obj;
             DataService = DatabaseService.GetVendor(VendorName);
+            ColumnsInfo = [];
             InitTables();
             LoadData();
             ResetOrder();
@@ -53,6 +54,7 @@
         {
             Console.WriteLine("Selected table:" + obj);
             TableName = (string)obj;
+            ColumnsInfo = [];
             LoadData();
             ResetOrder();
         }
@@ -69,6 +71,7 @@
                  FilterMode="GridFilterMode.FilterMenu"
                  Resizable="true"
                  Reorderable="true"
+                 EditMode="GridEditMode.Popup"
                  SelectionMode="GridSelectionMode.Multiple"
                  OnStateInit="@(args => OnStateInit(args))"
                  PageSize="5"
@@ -103,6 +106,7 @@
         List<GenericEntity> DataEntities { get; set; }
         TelerikGrid<Dictionary<string, object>> GridRef { get; set; }
         Dictionary<string, object> TableItem { get; set; } = new();
+        IEnumerable<KeyValuePair<string, GenericEntity.ColumnInfo>> ColumnsInfo { get; set; } = [];
         EditPopup EditWindow;
         InfoPopup InfoWindow;
         
@@ -161,7 +165,11 @@
 
         private IEnumerable<KeyValuePair<string, GenericEntity.ColumnInfo>> GetColumns()
         {
-            return DataEntities.First().ColumnsInfo();
+            if (!ColumnsInfo.Any())
+            {
+                ColumnsInfo = DataService.GetEmpty(TableName).ColumnsInfo();
+            }
+            return ColumnsInfo;
         }
 
         public DataTable GetData()
@@ -190,7 +198,14 @@
         {
             var model = (Dictionary<string, object>)args.Item;
             var entity = model.ToEntity(DataService.GetEmpty(TableName));
-            DataService.CreateOne(entity);
+            try
+            {
+                DataService.CreateOne(entity);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
             LoadData();
         }
 
@@ -198,7 +213,14 @@
         {
             var model = (Dictionary<string, object>)args.Item;
             var entity = model.ToEntity(DataService.GetEmpty(TableName));
-            DataService.DeleteOne(entity);
+            try
+            {
+                DataService.DeleteOne(entity);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
             LoadData();
         }
 
@@ -213,7 +235,14 @@
         {
             var entity = argsItem.ToEntity(DataService.GetEmpty(TableName));
             Console.WriteLine(entity);
-            DataService.UpdateOne(entity);
+            try
+            {
+                DataService.UpdateOne(entity);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
             LoadData();
         }
 

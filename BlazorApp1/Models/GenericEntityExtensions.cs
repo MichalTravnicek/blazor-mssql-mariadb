@@ -1,4 +1,5 @@
 using System.Data;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BlazorApp1.Models;
 
@@ -8,6 +9,11 @@ public static class GenericEntityExtensions
     {
         Console.WriteLine("To data table conversion");
         DataTable table = new DataTable();
+
+        if (entities.IsNullOrEmpty())
+        {
+            return table;
+        }
 
         foreach (var column in entities.First().ColumnsInfo())
         {

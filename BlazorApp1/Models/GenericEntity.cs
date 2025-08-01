@@ -11,9 +11,9 @@ public class GenericEntity
     {
         List<KeyValuePair<string, ColumnInfo>> columns = [];
         columns.AddRange(Ids.Select(keyValue => 
-            new KeyValuePair<string, ColumnInfo>(keyValue.Key, new ColumnInfo(keyValue.Value!.GetType(),true))));
+            new KeyValuePair<string, ColumnInfo>(keyValue.Key, new ColumnInfo(keyValue.Value?.GetType() ?? typeof(int),true))));
         columns.AddRange(Values.Select(keyValue => 
-            new KeyValuePair<string, ColumnInfo>(keyValue.Key, new ColumnInfo(keyValue.Value!.GetType(),false))));
+            new KeyValuePair<string, ColumnInfo>(keyValue.Key, new ColumnInfo(keyValue.Value?.GetType() ?? typeof(string),false))));
         return columns;
     }
 
