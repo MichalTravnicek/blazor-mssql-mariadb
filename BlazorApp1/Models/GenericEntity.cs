@@ -33,11 +33,11 @@ public class GenericEntity
         string retval = "";
         foreach (var keyValue in Ids)
         {
-            retval += keyValue.Key + "=" + keyValue.Value + ";";
+            retval += keyValue.Key + "=" + keyValue.Value + "; ";
         }
         foreach (var keyValue in Values)
         {
-            retval += keyValue.Key + "=" + keyValue.Value + ";";
+            retval += keyValue.Key + "=" + keyValue.Value + "; ";
         }
 
         return retval;

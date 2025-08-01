@@ -31,6 +31,8 @@
     <InfoPopup @ref="@InfoWindow" Columns="@GetColumns().ToDictionary()" ItemValues="@TableItem" 
                ResetAction="@(() => ResetOrder())"/>
     
+    <ErrorPopup @ref="@ErrorWindow" ResetAction="@(() => ResetOrder())"/>
+    
     @code {
         IEnumerable<string> _vendorData = new List<string>();
         IEnumerable<string> _tablesData = new List<string>();
@@ -108,6 +110,7 @@
         IEnumerable<KeyValuePair<string, GenericEntity.ColumnInfo>> ColumnsInfo { get; set; } = [];
         EditPopup EditWindow;
         InfoPopup InfoWindow;
+        ErrorPopup ErrorWindow;
         
         string VendorName { get; set; } = "";
         string TableName { get; set; } = "";
@@ -163,7 +166,15 @@
         private void LoadData()
         {
             Console.WriteLine("---Loading data---");
-            DataEntities = DataService.GetAll(TableName);
+            try
+            {
+                DataEntities = DataService.GetAll(TableName);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                ErrorWindow.Show("LOAD",$"Load all from {TableName}" , e.Message);
+            }
             DataTable = GetData();
             ResetOrder();
         }
@@ -218,6 +229,7 @@
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                ErrorWindow.Show("CREATE",entity.ToString(), e.Message);
             }
             LoadData();
         }
@@ -234,6 +246,7 @@
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                ErrorWindow.Show("DELETE",entity.ToString(),e.Message);
             }
             LoadData();
         }
@@ -257,6 +270,7 @@
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                ErrorWindow.Show("UPDATE",entity.ToString(),e.Message);
             }
             LoadData();
         }

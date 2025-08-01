@@ -1,0 +1,64 @@
+<TelerikWindow @bind-Visible="@WindowIsVisible">
+    <WindowTitle>
+        Database error 
+    </WindowTitle>
+    <WindowContent>
+        <em>
+            <p>Operation: <b>@_operation</b></p>
+            <TelerikTextArea ResizeMode="TextAreaResizeMode.Auto" ReadOnly="true"
+                             Class="max-height-200" Value="@_data"/>
+            <br/>
+            <br/>
+            <p><strong>@_message</strong></p>
+        </em>
+    </WindowContent>
+    <WindowActions>
+        <WindowAction Name="Close" />
+    </WindowActions>
+    <WindowFooter>
+    </WindowFooter>
+</TelerikWindow>
+
+@code {
+    private bool _windowIsVisible;
+
+    private string _operation = "";
+    private string _data = "";
+    private string _message = "";
+    [Parameter]
+    public EventCallback ResetAction { get; set; }
+
+    public bool WindowIsVisible
+    {
+        get => _windowIsVisible;
+        set
+        {
+            _windowIsVisible = value;
+            if (value)
+            {
+                Console.WriteLine("---Error window visible---");
+                return;
+            }
+
+            Console.WriteLine("---Error window hidden---");
+            _message = "";
+            ResetAction.InvokeAsync();
+        }
+    }
+
+    public void Show(string operation, string data, string message)
+    {
+        _operation = operation;
+        _data = data;
+        _message = message;
+        WindowIsVisible = true;
+    }
+    
+}
+
+<style>
+    .max-height-200 > textarea {
+        max-height: 200px;
+        overflow-y: auto !important;
+    }
+</style>
