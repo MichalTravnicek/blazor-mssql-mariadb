@@ -1,3 +1,5 @@
+using System.Data.SqlTypes;
+using System.Text.RegularExpressions;
 using BlazorApp1.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
@@ -24,6 +26,37 @@ public class SqliteVendor(IOptions<ConnectionContext> connectionContext)
 
     public override GenericEntity GetEmpty(string tableName)
     {
-        return GetEmptyInternal($"SELECT * FROM {tableName} LIMIT 1", tableName);
+        var blankEntity = new GenericEntity();
+        blankEntity.TableName = tableName;
+        var select = $"pragma table_info('{tableName}');";
+        List<GenericEntity> entries = SelectQuery(select);
+        foreach (var selectEntity in entries)
+        {
+            var column = selectEntity.Values["name"]?.ToString() ?? 
+                         throw new SqlTypeException("Column name missing");
+            var dataType = ColumnTypeMapping(selectEntity.Values["type"]?.ToString() ?? string.Empty);
+            var isId = selectEntity.Values["pk"]?.ToString() == "1";
+            if (isId)
+            {
+                blankEntity.Ids[column] = dataType;
+            }
+            else
+            {
+                blankEntity.Values[column] = dataType;
+            }
+        }
+        return blankEntity;
+    }
+    
+    private object ColumnTypeMapping(string type)
+    {
+        var _type = Regex.Replace(type,"\\(.*\\)", "");
+        switch (_type)
+        {
+            case "INTEGER" : return 0;
+            case "TEXT" : return "";
+        }
+
+        throw new SqlTypeException("Unknown type encountered");
     }
 }
