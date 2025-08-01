@@ -183,7 +183,15 @@
         {
             if (!ColumnsInfo.Any())
             {
-                ColumnsInfo = DataService.GetEmpty(TableName).ColumnsInfo();
+                try
+                {
+                    ColumnsInfo = DataService.GetEmpty(TableName).ColumnsInfo();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    ErrorWindow.Show("LOAD",$"Load columns for {TableName}",e.Message);
+                }
             }
             return ColumnsInfo;
         }
